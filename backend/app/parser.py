@@ -296,8 +296,9 @@ class QueryParser:
         Returns:
             ParsedQuery object with extracted information
         """
-        if not config.OPENAI_API_KEY:
-            logger.warning("OpenAI API key not available, falling back to regex parsing")
+        # Check if either Azure OpenAI or OpenAI API key is available
+        if not (config.AZURE_OPENAI_API_KEY or config.OPENAI_API_KEY):
+            logger.warning("No OpenAI API key (Azure or regular) available, falling back to regex parsing")
             return self.parse_with_regex(query)
         
         prompt = f"""
