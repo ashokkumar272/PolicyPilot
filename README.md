@@ -1,14 +1,576 @@
-# PolicyPilot - AI-Powered Insurance Policy Assistant
+# PolicyPilot 🛡️
 
-A sophisticated full-stack RAG (Retrieval Augmented Generation) system with FastAPI backend and React frontend for intelligent insurance policy analysis and claims processing.
+> **LLM-Powered Insurance Policy Document Processing System**
 
-## 🎯 Overview
+PolicyPilot is an intelligent document processing system that helps analyze insurance policies using advanced AI and semantic search capabilities. Upload your insurance documents and get instant, context-aware answers to your policy questions.
 
-PolicyPilot is an AI-powered assistant that helps users understand insurance policies, check coverage, and get intelligent answers to policy-related questions. It uses advanced RAG technology with Azure OpenAI for natural language understanding and decision-making.
+![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)
+![React](https://img.shields.io/badge/React-18+-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-4.9+-blue.svg)
+![Azure](https://img.shields.io/badge/Azure-Ready-orange.svg)
 
-## ✨ Key Features
+## ✨ Features
 
-🔍 **Intelligent RAG System**: Advanced retrieval with context-aware search  
+- **🤖 AI-Powered Analysis**: Uses Azure OpenAI GPT-4 for intelligent policy interpretation
+- **📄 Multi-Format Support**: Process PDF, DOCX, and TXT documents
+- **🔍 Semantic Search**: Advanced vector search with neighboring chunk context (±1 range)
+- **💬 Interactive Chat**: Modern React-based chat interface
+- **📁 Document Management**: Drag & drop upload with document organization
+- **🚀 Production Ready**: Docker containerization and Azure deployment
+- **🔒 Secure**: Azure-integrated authentication and storage
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   React Frontend │────│   FastAPI Backend │────│  Azure OpenAI   │
+│   (Port 3000)    │    │   (Port 8000)     │    │   GPT-4.1       │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                        │                        │
+         │                        ▼                        │
+         │              ┌──────────────────┐              │
+         │              │   PostgreSQL     │              │
+         └──────────────│   Database       │──────────────┘
+                        └──────────────────┘
+                                 │
+                        ┌──────────────────┐
+                        │  Azure Blob      │
+                        │  Storage         │
+                        └──────────────────┘
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Python 3.11+**
+- **Node.js 18+**
+- **Azure OpenAI API Key**
+- **Azure Account** (for production deployment)
+
+### Local Development Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/rajatsinghten/PolicyPilot.git
+   cd PolicyPilot
+   ```
+
+2. **Set up Backend**
+   ```bash
+   cd backend
+   
+   # Create and activate virtual environment
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   
+   # Configure environment variables
+   cp .env.example .env
+   # Edit .env with your Azure OpenAI credentials
+   ```
+
+3. **Set up Frontend**
+   ```bash
+   cd ../frontend
+   
+   # Install dependencies
+   npm install
+   ```
+
+4. **Start Development Servers**
+   ```bash
+   # Terminal 1: Start Backend
+   cd backend
+   source venv/bin/activate
+   python -m app.api
+   
+   # Terminal 2: Start Frontend
+   cd frontend
+   npm start
+   ```
+
+5. **Access the Application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - API Documentation: http://localhost:8000/docs
+
+## 📋 Environment Configuration
+
+### Backend Environment Variables (`.env`)
+
+```env
+# Azure OpenAI Configuration
+AZURE_OPENAI_API_KEY=your-azure-openai-key
+AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT_NAME=your-deployment-name
+
+# Application Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+ENVIRONMENT=development
+
+# Document Processing
+MAX_DOCUMENT_SIZE=10485760
+CHUNK_SIZE=500
+CHUNK_OVERLAP=50
+TOP_K_RESULTS=5
+INCLUDE_NEIGHBORS=true
+NEIGHBOR_RANGE=1
+
+# CORS (for production, specify your frontend URL)
+CORS_ORIGINS=http://localhost:3000
+```
+
+## 🔧 API Endpoints
+
+### Document Management
+- `POST /upload` - Upload and process documents
+- `GET /documents` - List all processed documents
+- `DELETE /documents/{document_name}` - Delete a document
+
+### Query Processing
+- `POST /process` - Process natural language queries with LLM reasoning
+- `GET /search/{query}` - Simple semantic search without LLM
+
+### System
+- `GET /health` - Health check endpoint
+- `GET /` - API information
+
+### Example API Usage
+
+```javascript
+// Upload a document
+const formData = new FormData();
+formData.append('file', pdfFile);
+const response = await fetch('http://localhost:8000/upload', {
+  method: 'POST',
+  body: formData
+});
+
+// Process a query
+const queryResponse = await fetch('http://localhost:8000/process', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    query: "What is covered under accidental death?",
+    top_k: 5,
+    use_llm_reasoning: true,
+    include_neighbors: true
+  })
+});
+```
+
+## 🐳 Docker Development
+
+### Using Docker Compose
+
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Access applications
+# Frontend: http://localhost:80
+# Backend: http://localhost:8000
+```
+
+### Individual Container Commands
+
+```bash
+# Backend only
+cd backend
+docker build -t policypilot-backend .
+docker run -p 8000:8000 --env-file .env policypilot-backend
+
+# Frontend only
+cd frontend
+docker build -t policypilot-frontend .
+docker run -p 80:80 policypilot-frontend
+```
+
+## ☁️ Azure Deployment
+
+### Automated Deployment (Recommended)
+
+1. **Fork this repository** to your GitHub account
+
+2. **Set up Azure resources** using Azure CLI:
+   ```bash
+   # Install Azure CLI
+   brew install azure-cli  # macOS
+   
+   # Login to Azure
+   az login
+   
+   # Run the deployment script
+   ./deploy/setup-azure.sh
+   ```
+
+3. **Configure GitHub Secrets** in your repository:
+   - `AZURE_CLIENT_ID`
+   - `AZURE_CLIENT_SECRET`
+   - `AZURE_TENANT_ID`
+   - `AZURE_REGISTRY_USERNAME`
+   - `AZURE_REGISTRY_PASSWORD`
+   - `AZURE_STATIC_WEB_APPS_API_TOKEN`
+
+4. **Push changes** to trigger automatic deployment:
+   ```bash
+   git add .
+   git commit -m "Deploy to Azure"
+   git push origin main
+   ```
+
+### Manual Deployment Steps
+
+<details>
+<summary>Click to expand detailed manual deployment steps</summary>
+
+#### Phase 1: Prepare Azure Resources
+
+```bash
+# Create resource group
+az group create --name PolicyPilot-RG --location eastus2
+
+# Create PostgreSQL database
+az postgres flexible-server create \
+  --resource-group PolicyPilot-RG \
+  --name policypilot-db \
+  --location eastus2 \
+  --admin-user policypilotadmin \
+  --admin-password "YourSecurePassword123!" \
+  --sku-name Standard_B1ms
+
+# Create storage account
+az storage account create \
+  --resource-group PolicyPilot-RG \
+  --name policypilotfiles \
+  --location eastus2 \
+  --sku Standard_LRS
+
+# Create container registry
+az acr create \
+  --resource-group PolicyPilot-RG \
+  --name policypilotregistry \
+  --sku Basic
+```
+
+#### Phase 2: Deploy Backend
+
+```bash
+# Login to container registry
+az acr login --name policypilotregistry
+
+# Build and push backend image
+cd backend
+docker build -t policypilotregistry.azurecr.io/policypilot-backend:latest .
+docker push policypilotregistry.azurecr.io/policypilot-backend:latest
+
+# Create Container Apps environment
+az containerapp env create \
+  --name PolicyPilot-Environment \
+  --resource-group PolicyPilot-RG \
+  --location eastus2
+
+# Deploy backend container
+az containerapp create \
+  --name policypilot-backend \
+  --resource-group PolicyPilot-RG \
+  --environment PolicyPilot-Environment \
+  --image policypilotregistry.azurecr.io/policypilot-backend:latest \
+  --target-port 8000 \
+  --ingress external
+```
+
+#### Phase 3: Deploy Frontend
+
+```bash
+# Build frontend
+cd frontend
+npm run build
+
+# Create Static Web App
+az staticwebapp create \
+  --name PolicyPilot-Frontend \
+  --resource-group PolicyPilot-RG \
+  --source https://github.com/rajatsinghten/PolicyPilot \
+  --branch main \
+  --app-location "/frontend" \
+  --build-location "build"
+```
+
+#### Phase 4: Configure Database
+
+```sql
+-- Connect to PostgreSQL and create tables
+CREATE TABLE documents (
+    id SERIAL PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    content_type VARCHAR(100),
+    file_size BIGINT,
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed BOOLEAN DEFAULT FALSE,
+    azure_blob_url TEXT
+);
+
+CREATE TABLE document_chunks (
+    id SERIAL PRIMARY KEY,
+    document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE,
+    chunk_index INTEGER NOT NULL,
+    text_content TEXT NOT NULL,
+    metadata JSONB,
+    embedding_vector FLOAT8[],
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE query_logs (
+    id SERIAL PRIMARY KEY,
+    query_text TEXT NOT NULL,
+    response_data JSONB,
+    processing_time FLOAT,
+    user_session VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+</details>
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+PolicyPilot/
+├── backend/                    # FastAPI backend
+│   ├── app/
+│   │   ├── api.py             # Main API endpoints
+│   │   ├── embedder.py        # Document embedding logic
+│   │   ├── ingestion.py       # Document processing
+│   │   ├── parser.py          # Query parsing
+│   │   ├── reasoner.py        # LLM reasoning
+│   │   └── retriever.py       # Semantic search
+│   ├── data/
+│   │   ├── documents/         # Uploaded documents
+│   │   └── embeddings/        # FAISS index and embeddings
+│   ├── config.py              # Configuration settings
+│   ├── requirements.txt       # Python dependencies
+│   └── Dockerfile             # Backend container config
+├── frontend/                   # React frontend
+│   ├── src/
+│   │   ├── components/        # React components
+│   │   ├── services/          # API services
+│   │   └── types/            # TypeScript type definitions
+│   ├── public/               # Static assets
+│   ├── package.json          # Node.js dependencies
+│   └── Dockerfile            # Frontend container config
+├── .github/workflows/         # GitHub Actions CI/CD
+├── docker-compose.yml         # Local development setup
+└── README.md                 # This file
+```
+
+### Key Technologies
+
+**Backend:**
+- **FastAPI**: High-performance Python web framework
+- **Sentence Transformers**: Text embedding generation
+- **FAISS**: Vector similarity search
+- **Azure OpenAI**: GPT-4.1 for intelligent reasoning
+- **PyPDF2**: PDF document processing
+
+**Frontend:**
+- **React 18**: Modern UI framework
+- **TypeScript**: Type-safe JavaScript
+- **Axios**: HTTP client for API communication
+- **CSS3**: Modern styling with Inter font
+
+### Adding New Features
+
+1. **Backend Changes**: Modify files in `backend/app/`
+2. **Frontend Changes**: Update components in `frontend/src/components/`
+3. **Configuration**: Update `backend/config.py` for new settings
+4. **Database**: Add migrations in deployment scripts
+
+## 📊 Monitoring & Logging
+
+### Application Insights Integration
+
+```python
+# Backend logging configuration
+from loguru import logger
+
+logger.add(
+    "logs/app.log",
+    rotation="1 week",
+    retention="1 month",
+    level="INFO"
+)
+```
+
+### Health Check Endpoints
+
+- `GET /health` - Application health status
+- `GET /` - Service information and component status
+
+## 🔒 Security
+
+### Environment Variables
+- Never commit `.env` files to version control
+- Use Azure Key Vault for production secrets
+- Rotate API keys regularly
+
+### CORS Configuration
+```python
+# Production CORS setup
+CORS_ORIGINS = [
+    "https://your-domain.com",
+    "https://your-app.azurestaticapps.net"
+]
+```
+
+### File Upload Security
+- File type validation
+- Size limits (10MB default)
+- Virus scanning (recommended for production)
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Backend tests
+cd backend
+python -m pytest tests/
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+### Test Coverage
+
+```bash
+# Generate coverage report
+cd backend
+python -m pytest --cov=app tests/
+```
+
+## � Troubleshooting
+
+### Common Issues
+
+**Backend not starting:**
+```bash
+# Check virtual environment activation
+source venv/bin/activate
+which python
+
+# Verify dependencies
+pip install -r requirements.txt
+
+# Check environment variables
+python -c "import os; print(os.getenv('AZURE_OPENAI_API_KEY'))"
+```
+
+**Frontend build errors:**
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**Azure OpenAI connection issues:**
+- Verify API key and endpoint in `.env`
+- Check deployment name matches Azure configuration
+- Ensure proper CORS settings
+
+**Docker issues:**
+```bash
+# Rebuild containers
+docker-compose down
+docker-compose up --build --force-recreate
+```
+
+## 📈 Performance Optimization
+
+### Backend Optimization
+- Use Redis for caching (production)
+- Implement connection pooling for database
+- Optimize chunk size and overlap parameters
+
+### Frontend Optimization
+- Enable React production build: `npm run build`
+- Implement lazy loading for components
+- Use service workers for caching
+
+## 🤝 Contributing
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Commit your changes**: `git commit -m 'Add amazing feature'`
+4. **Push to the branch**: `git push origin feature/amazing-feature`
+5. **Open a Pull Request**
+
+### Development Workflow
+
+```bash
+# Start development environment
+./start-dev.sh
+
+# Make changes and test
+# Backend: http://localhost:8000
+# Frontend: http://localhost:3000
+
+# Run tests before committing
+cd backend && python -m pytest
+cd frontend && npm test
+
+# Commit and push changes
+git add .
+git commit -m "Description of changes"
+git push origin feature-branch
+```
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/rajatsinghten/PolicyPilot/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/rajatsinghten/PolicyPilot/discussions)
+- **Email**: rajatsinghten@example.com
+
+## 🎯 Roadmap
+
+- [ ] **Multi-language Support**: Process documents in multiple languages
+- [ ] **Advanced Analytics**: Document insights and policy comparison
+- [ ] **Mobile App**: React Native mobile application
+- [ ] **Integration APIs**: Connect with insurance management systems
+- [ ] **Machine Learning**: Custom model training for specific insurance domains
+- [ ] **Audit Trail**: Complete logging and compliance features
+
+## 👥 Team
+
+- **Rajat Singh** - *Lead Developer* - [@rajatsinghten](https://github.com/rajatsinghten)
+
+## 🙏 Acknowledgments
+
+- **Azure OpenAI** for powerful language model capabilities
+- **Hugging Face** for sentence transformer models
+- **FastAPI** community for excellent documentation
+- **React** team for modern frontend framework
+
+---
+
+**Built with ❤️ using Azure AI Services**
+
+*PolicyPilot - Making insurance policies understandable through AI*
 🧠 **Azure OpenAI Integration**: GPT-4 powered reasoning and analysis  
 📄 **Multi-format Document Support**: PDF, DOCX, TXT processing  
 🎨 **Beautiful Modern UI**: Glass morphism design with smooth animations  
